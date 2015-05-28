@@ -1,0 +1,31 @@
+\section*{Appendix}
+
+These are the suggestions of improvements we got from group 2. After each suggestion we give an account for what we have changed, if anything.
+
+\textit{1. In the design proposal it is not clearly pointed out as to where the different services are going to be run. Where is the RADIUS server? Where will the IDS system run? Furthermore it was unclear what was to run on the entrypoint machines. As it seems, looking at the network map and reading your descriptions, the only service running on them would be the firewall.}
+
+We have improved our figure to make this more clear.
+
+\textit{2. The 2 factor authentication on HTTPS? We do not think that it is really possible doing this, as this would be more of a web authentication.}
+
+Well, this is what we believe ACME wants. We interpreted the requirement as secure access to a web server was needed. Using HTTPS in combination with other authentication forms will achieve this. A VPN would for example give access to the whole internal network, which is not the same as the requirement (as we interpret it).
+
+\textit{3. We have found it unclear as to how your P2P file exchange works. You mention it but have not described as to how you will accomplish this.}
+
+We have made this more clear in the description. However, exactly how we will achieve this is not entirely finalized.
+
+\textit{4. As it looks like in your design routing will be done on the small WiFi routers? This seems like those small routers could be a potential bottle neck in the network and we think that they should only be utilised as WiFi Access Points.}
+
+This is not the case, we have made it more clear in the figure.
+
+\textit{5. You describe that you will be using OpenCA however our understanding is that you are supposed to use the x-PKI infrastructure provided by ACME, hence it seems a bit too complicated to use your own implementation.}
+
+Group 2 must have misunderstood this. We are to implement our own PKI before implementing the x-PKI.
+
+\textit{6. We believe that all traffic should be logged, not only the traffic to and from the web server as stated in the design proposal. What if someone is doing prohibited things inside the internal network?}
+
+It was stated explicitly that all traffic to and from the web server was to be logged, no other critical points was mentioned. There is an IDS within the network which ideally will log any attack. We assume that the internal network is safe (meaning we can trust the employees and risk of unauthorized outsiders compromising the network by physical access is negligable), so logging all traffic within the network will not be necessary.
+
+\textit{7. When you are using 2 factor authentication, what is the other factor? Usually this should be user credentials. If so, where are these user credential stored and how are they protected? What technology is used for this?}
+
+This has been made more clear in the documents.

@@ -1,0 +1,13 @@
+\subsection*{API}
+To enable the Secure File Transfer to talk with the server we have implemented an API which (after SSL authentication) enables the Android application to use the
+webserver as a backbone. The API has four tasks:
+\begin{itemize}
+\item Get users - Names and Public keys
+\item Get information about file(s) sent to the user and the corresponding encrypted symmetric key
+\item Get the encrypted file
+\item Send file to another user
+\end{itemize}
+These are called by setting a request parameter "req_status" to the corresponding number (1-4), and depending on which task a number of additional parameters might have to be set. By doing this we could at a later stage have other applications connected to the same functionality. 
+
+This rather small API uses a MySQL database to store users and transfers in transit and this is accessed through PHP using MySQLi connection/queries. As HTTPS/SSL connections are handled in the Apache webserver rather than in PHP there is not to much authentication going on in the API, but using some of the  $_SERVER variables we check that the SSL connection has been verified successfully and that the certificate is issued by our CA (but no one should be able to reach tha API if this wasn't correct). For the SQL queries we use prepared statements to prevent SQL injection.
+ 

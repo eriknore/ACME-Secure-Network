@@ -1,0 +1,16 @@
+<resources>
+    <string name="app_name">SecureFileTransfer</string>
+
+    <string name="hello_world">Hello world!</string>
+    <string name="action_settings">Settings</string>
+    <string name="connectButtonText">CONNECT</string>
+    <string name="textCertTitleText">Chosen Certificate:</string>
+    <string name="certButtonText">Add Certificate</string>
+    <string name="textCertContentDefaultText"><![CDATA[<None>]]></string>
+    <string name="title_activity_select_file">SelectFileActivity</string>
+    <string name="textTargetUserText">Target User:</string>
+    <string name="textSelectFileText">Select File:</string>
+    <string name="textSelectedFileDefaultText"><![CDATA[<No file selected>]]></string>
+    <string name="textFileBrowseButton">Browse</string>
+    <string name="textSendButton">Send</string>
+</resources>

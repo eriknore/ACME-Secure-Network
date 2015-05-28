@@ -1,0 +1,36 @@
+eo\section*{Design}
+
+The heart of our secure solution is an ACME public key infrastructure (PKI), meaning most of the security is based around the PKI. Many of the services involves a client/server relation where both server and client are authenticated using ACME certificates before data is encrypted using SSL/TLS. The PKI is based on a Root Certificate Authority (CA) using \href{http://www.openssl.org/}{OpenSSL}. The Root CA credentials should be kept secure, preferably never used on a computer connected to the internet and stored on a USB-key or similar - if these are compromised the whole network should be considered insecure! A Signing CA with a certificate signed by the Root CA is used to issue certificates to all employees, company devices, servers, etc. 
+
+All certificates are issued with a 2048-bit RSA key pair and SHA256 hashed message authentication code (HMAC). Certificate Revocation Lists (CRL) are regenerated daily and distributed where needed, if a certificate is revoked the CRL is regenerated and distributed immediately.
+
+The main advantage of using a PKI instead of e.g. a Kerberos based system is that services do not depend on a central machine being online and available to the users. A PKI avoids a single point of failure, if e.g. the authentication server becomes unavailable the whole network is unavailable. A PKI on the other hand is not dependent on any machine. If all certificates are distributed and the Root certificate is available and trusted, then everything works. Another advantage with a PKI is that it's not dependent on passwords (other than when exporting public and private keys). This means greater transparency for users and avoids most of the risks with a password based system (choice of bad passwords, dicitionary attacks, etc.).
+
+\subsection*{External security}
+
+All traffic between the London and Stockholm network is protected through a Virtual Private Network (VPN) in tunnel mode (using TLS/SSL), the software used is \href{http://openvpn.net/}{OpenVPN}. Both London (client) and Stockholm (server) entry points are authenticated using ACME certificates. 
+
+Employees outside of the ACME network can access sensitive data on an \href{http://httpd.apache.org/}{Apache} webserver. The webserver is only accessible using HTTPS, i.e. encrypted with SSL/TLS using ACME PKI credentials. It is configured to only allow strong ciphers and TLSv1.0 protocol or higher. All traffic is logged and saved daily. 
+
+To access the secure data on the webserver an employee is authenticated using two or three factors. Our suggestion is that an employee is required to install his or her ACME certificate on the device used to access the server, the requirement of certificates can be considered a strong factor. The second factor is one time 6-digit pincodes (OTP) using \href{http://en.wikipedia.org/wiki/Google_Authenticator}{Google Authenticator} which are regenerated every 30 seconds. An optional third factor is a personal pincode or password used in conjunction with the OTP. After 5 bad login attempts a user account is locked. If using personal certificates are considered too impractical a two factor authentication is possible using only personal passwords and OTPs.
+
+\subsubsection*{Internal Security}
+
+It is assumed that the internal network is physically secure from outsiders, i.e. that an outsider does not have physical access to the offices of ACME. In other words there is no need to encrypt the internal traffic. We also assume that proper measures are taken at ACME offices to prevent unauthorized personnel from accessing the workstations.
+
+A Firewall is placed at the entry point of each network using stateful packet filters. This will prevent unauthorized outsiders on the internet to get access to the internal network. It will strictly allow communication to those services we use, with a default DROP policy, we wrote every rule with as few wildcards as possible. The firewall is implemented using \href{http://en.wikipedia.org/wiki/Iptables}{iptables} and will also be used for routing.
+
+
+An IDS is installed at the Stockholm office monitoring all traffic going in and out of the network. The software used is \href{HTTPS://www.snort.org/}{Snort}. The IDS can be configured to send a summary to an administrator daily automatically by email. It \emph{does need} proper and time consuming configuration of the rules to work optimally, this should be performed as soon as the network is deployed. The IDS is currently configured to update its rules automatically on a daily basis and can be administrated using a web based GUI.
+
+The wireless network is available to company devices using ACME certificates. The network is secured by WPA2 Enterprise using EAP-TLS protocol, meaning all devices and an internal RADIUS server are authenticated by ACME certificates and all communication is encrypted. The software used for the RADIUS server is \href{http://freeradius.org/}{FreeRADIUS}.
+
+\subsection*{File sharing service}
+
+Regarding the file sharing service, we have assumed that we are \emph{not required} to restrict company phones from unauthorized file sharing with other devices. In other words we are only supplying an application for which secure file sharing is possible. The first case would mean restricting USB transfer, use of SD-cards, use of other applications, etc. Which might not even be possible using commercially available mobile phone operating systems.
+
+An Android application has been developed with the purpose of transferring files securely between employees' ACME phones. All the encryption and decryption is performed automatically and totally transparent to the user. A small API is hosted on the webserver which is used in the transfer of files and files are temporarily stored on the webserver. Employee PKI credentials are required on the phone as only the intended recipient should be able to access the file once transferred. A downside to this requirement is that in the event of a phone getting lost or stolen the employee credentials must be revoked and new ones issued and reinstalled, this includes all other devices used by the employee, if any. The upside is stronger security as files stored on the server cannot be accessed by others than the recipient, e.g. if the server would get compromised or server administrators by accident access files.
+
+The communication between the application and the webserver is secured over HTTPS where both parties are authenticated using ACME certificates. An employee can only send files to other employees as the possible recipients are supplied from the webserver using an automatically updated database of current employees. Once a file and recipient has been chosen a symmetric 256-bit key is randomly generated and used to encrypt the file using AES-CBC encryption. The symmetric key is then encrypted using the recipient's public key from the ACME credentials, meaning only the recipient having the matching private key can decrypt the file. The encrypted symmetric key, IV (for CBC) and file are sent to the server and stored there awaiting delivery.
+
+Each time an employee starts the application it checks if there are any files to retrieve from the webserver. If there is then the file, IV and paired symmetric key are delivered and decrypted so that the employee can access the file.

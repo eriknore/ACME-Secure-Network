@@ -1,0 +1,50 @@
+\section*{Appendix}
+
+There are some implementation specific details concerning the network and application we thought could be good to know. Also some shortcomings to our design which we didn't feel was necessary as this is more a proof of concept, still we are aware of them.
+
+The VMs contain
+
+\begin{itemize}
+    \item[\textbf{VM1:}] iptables, OpenVPN, Snort (incl GUI through Apache server)
+    \item[\textbf{VM2:}] iptables, OpenVPN
+    \item[\textbf{VM3:}] Apache web server, ACME PKI Signing CA
+    \item[\textbf{VM4:}] RADIUS server, ACME PKI Root CA
+\end{itemize}
+
+\subsubsection*{Web server}
+
+The Web server is currently stateless. We have not enabled cookies on the website as it is only a proof of concept. If we would have, we would have enabled SecureCookies on the Apache server preventing the client from sending cookies in an unencrypted channel - i.e. avoiding a possible type of redirection attack.
+
+The secure area of the web server could be used as a convenient secure area for the whole internal network. The secure area can be setup to only authenticate users from outside the internal network with Google Authenticator. However, an issue of revoked users and the wireless network (see below) must be resolved first.
+
+\subsubsection*{IDS - Snort}
+
+The IDS is mostly setup as a proof of concept, meaning we have  everything set up but not configured fully (web interface is ACIDBASE, or snortreport for a more summarized version and oinkmaster is used for automatic updates). The rules of which the IDS uses should be selected more carefully and possibly some custom rules should be added. We have tools (snort-stat) to produce a short summary report which could be sent by email daily to an administrator.
+
+\subsubsection*{PKI, CAs and authentication}
+
+The Root CA and Signing CA are symbolically stored on different VMs, so if the signing CA gets compromised we can revoke it meaning all issued certificates become useless. 
+
+We wrote scripts for creating and revoking users, so input of a new user is automatically inserted into the database when a user is created and CRLs are immediatly distributed to the other servers which are also restarted where necessary when a certificate is revoked. However the error handling of these scripts is not perfect, e.g. entering the wrong password for the sigining CA when creating a new certificate results in files being created but cannot be used (although insertion in database only happens if user is added sucessfully).
+
+The OTP account is created in a separate process. We have a script which, given a user name, generates a paired hash and QR-code to use with Google Authenticator. The hash and user name is manually entered into a list of users. The phone to be used as authenticator scans the QR-code. If someone gets hold of the QR-code he or she can authenticate using the paired username, so the QR-code should not be saved once it has been scanned.
+
+\subsubsection*{xPKI}
+
+With the use of KTH VeSPA, we managed to get certificates signed by their CA using a custom made script. It allows the user to use the certificate to make use of the VESPA services (have not gone through them as the site with the information was incomplete). The same way, the certificates issued by VeSPA could be used to make use of our own services (could be as we did not really add the VeSPA certificates to ours).
+
+\subsubsection*{Wireless network}
+
+We have found that the D-Link AP caches a user connection, meaning if a user is revoked he or she is still able to connect a certain time after revocation. In this situation the AP doesn't check credentials - however when credentials are checked the user is denied. We believe we can setup FreeRADIUS to demand that the AP doesn't cache sessions at all. We only found this out at the end so we didn't have time to investigate this further.
+
+\subsubsection*{Secure File Transfer}
+
+The way it works now, the following data is stored in a MySQL database: A list of all common names and corresponding Public Keys from the certificates. A table with common name, file name, the file, encrypted symmetric key and IV. To better secure the data in case the database is compromised, at least file name should also be encrypted with the recipients Public Key. Privacy can be strengthened by encrypting Common Names, but for ACME it might be more worth to have better accountability. That can be achieved for example by forcing the sender to sign a hash of the file sent. Having the file name in plaintext might also give an attacker patterns (known data) that help him break the symmetric key.
+
+The app also could be more user-friendly. Right now, in case it cannot contact the server, it crashes. When files are downloaded, all feedback the user gets is \emph{file downloaded}, which is not very helpful. 
+
+The client certificate is now stored in Androids KeyStore. It is possible to instead save it in an app-specific KeyStore, but this way we can use the same certificate for other uses.
+
+Another thing that we do not show in the demo but that a real life solution should have is a separate certificate for the cell phones. That way the cell phone certificate can be separately revoked upon theft or loss.
+
+The API can better be strengthened against SQL injections and also possible CSRF/XSS attacks.
